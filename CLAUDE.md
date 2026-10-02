@@ -1,7 +1,6 @@
 # PAI 4.0.3 — Personal AI Infrastructure
 
-> Fork of Daniel Miessler's [Personal_AI_Infrastructure](https://github.com/danielmiessler/Personal_AI_Infrastructure).
-> The Algorithm execution framework is sourced from [github.com/danielmiessler/TheAlgorithm](https://github.com/danielmiessler/TheAlgorithm).
+> Independently diverged from Daniel Miessler's [Personal_AI_Infrastructure](https://github.com/danielmiessler/Personal_AI_Infrastructure) — not a fork, not tracking upstream. Built for WSL2/Linux (not macOS) around a specific use case (intraday trading automation). The Algorithm execution framework was originally sourced from [github.com/danielmiessler/TheAlgorithm](https://github.com/danielmiessler/TheAlgorithm) and has since been modified for this build.
 
 # MODES
 
