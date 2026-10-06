@@ -483,7 +483,12 @@ If the trigger has not fired by Kill Time, **the thesis is dead for the day.** N
    ```bash
    tradekit regime --json --event "fed:Williams 08:05 CT" --event "corp:MRVL investor day 08:00 CT"   # events from step 2
    ```
-   - Render §2's **Regime (dimensional)** table straight from `state` + `evidence`: direction, structure,
+   - **Lead with `glance`; it must read at a glance** (operator, 2026-10-06). The Regime section opens with
+     `glance.headline` as a heading (e.g. "🔁 RANGE DAY — fade the edges, trade catalysts"), then the `chips` on
+     one line, then **✅ Trade / ⚠️ Careful / ❌ Off** from `glance.trade|careful|off`, then "Provisional" while
+     `glance.provisional`. The evidence table goes **under** it, never above it. The Notion header callout and
+     `Regime` property use the headline plus chips only.
+   - Under the glance, render the **evidence** table from `state` + `evidence`: direction, structure,
      volatility, participation, liquidity, events, data_quality. Show `conflicts` (e.g. QQQ vs SPY) and the
      `configuration_status`. While it is `experimental`, label the read **provisional**.
    - Copy the `playbooks` decisions into the validity gate. A `blocked` playbook does not reach ACTIVE;
