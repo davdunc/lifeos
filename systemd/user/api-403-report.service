@@ -1,0 +1,12 @@
+[Unit]
+Description=File paid-API 403s as GitHub issues (api-403 workflow)
+Documentation=file:///home/davdunc/.claude/Tools/api_errors.py
+After=network-online.target
+
+[Service]
+Type=oneshot
+# Reads ~/.local/state/api-errors/events.jsonl since the last cursor; comments on the open api-403
+# issue with the same fingerprint, or opens a new bug in the app's repo (davdunc/tradekit,
+# davdunc/lifeos, ...). Talks to GitHub only — never to Massive or Finviz.
+ExecStart=/usr/bin/python3 /home/davdunc/.claude/Tools/api_errors.py report
+Environment=PATH=/home/davdunc/.local/bin:/usr/local/bin:/usr/bin:/bin

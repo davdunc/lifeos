@@ -1,0 +1,15 @@
+[Unit]
+Description=Daily api-403 issue report at 21:45 ET
+Documentation=file:///home/davdunc/.claude/Tools/api_errors.py
+
+[Timer]
+# Anchored to America/New_York (this box's local zone does not track US DST). 21:45 ET is after
+# the extended session and the evening jobs, so one report per day covers the whole session.
+OnCalendar=*-*-* 21:45:00 America/New_York
+Persistent=true
+# Spread so nodes running the same timer don't all hit GitHub at once; fingerprint dedupe
+# handles any overlap.
+RandomizedDelaySec=15min
+
+[Install]
+WantedBy=timers.target
