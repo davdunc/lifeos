@@ -14,8 +14,25 @@
  *   FRED_API_KEY - Required API key from https://fred.stlouisfed.org/docs/api/api_key.html
  */
 
-import "./loadEnv";
 import { parseArgs } from "util";
+import { readFileSync } from "fs";
+import { homedir } from "os";
+import { join } from "path";
+
+// Secrets: process.env first, then ~/.claude/.env read directly (LifeOS Containment.md:
+// per-tool fs.readFileSync + small parser, no shared helper).
+function readDotEnv(key: string): string | undefined {
+  try {
+    const content = readFileSync(join(homedir(), ".claude", ".env"), "utf-8");
+    for (const line of content.split("\n")) {
+      const match = line.match(/^([^#=]+)=(.*)$/);
+      if (match && match[1].trim() === key) return match[2].trim().replace(/^["']|["']$/g, "");
+    }
+  } catch {
+    // No .env: callers report the missing key.
+  }
+  return undefined;
+}
 
 // Core economic series for US-Common-Metrics
 const CORE_SERIES: Record<string, { name: string; category: string; unit: string }> = {
@@ -115,7 +132,7 @@ async function fetchFredSeries(
   seriesId: string,
   years: number = 10
 ): Promise<SeriesData | null> {
-  const apiKey = process.env.FRED_API_KEY;
+  const apiKey = process.env.FRED_API_KEY || readDotEnv("FRED_API_KEY");
 
   if (!apiKey) {
     console.error("Error: FRED_API_KEY environment variable not set");

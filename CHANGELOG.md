@@ -12,6 +12,12 @@ a commit that changes any file must bump `VERSION`, add an entry here, and carry
 **Tags:** `vX.Y.Z` on the release commit. **Node stamp:** `~/.claude/LifeOS/LOCAL_RELEASE.json`, written by
 `lifeos_release.py install <component>`.
 
+## [1.1.1] — 2026-10-14
+### Changed
+- **USMetrics key loading now follows upstream's secrets rule** (ADR 0007, superseding 0003):
+  - each tool reads `process.env`, then falls back to `~/.claude/.env` with its own small parser;
+  - `skills/USMetrics/Tools/loadEnv.ts` is removed, along with its extra paths and comment stripping.
+
 ## [1.1.0] — 2026-10-14
 ### Added
 - **Architecture Decision Records** in `docs/adr/` (tradekit format), with an index:

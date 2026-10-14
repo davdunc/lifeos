@@ -13,15 +13,32 @@
  *   EIA_API_KEY - Required for energy data
  */
 
-import "./loadEnv";
 import { parseArgs } from "util";
+import { readFileSync } from "fs";
+import { homedir } from "os";
+import { join } from "path";
+
+// Secrets: process.env first, then ~/.claude/.env read directly (LifeOS Containment.md:
+// per-tool fs.readFileSync + small parser, no shared helper).
+function readDotEnv(key: string): string | undefined {
+  try {
+    const content = readFileSync(join(homedir(), ".claude", ".env"), "utf-8");
+    for (const line of content.split("\n")) {
+      const match = line.match(/^([^#=]+)=(.*)$/);
+      if (match && match[1].trim() === key) return match[2].trim().replace(/^["']|["']$/g, "");
+    }
+  } catch {
+    // No .env: callers report the missing key.
+  }
+  return undefined;
+}
 
 // ============================================================================
 // CONFIGURATION
 // ============================================================================
 
-const FRED_API_KEY = process.env.FRED_API_KEY;
-const EIA_API_KEY = process.env.EIA_API_KEY;
+const FRED_API_KEY = process.env.FRED_API_KEY || readDotEnv("FRED_API_KEY");
+const EIA_API_KEY = process.env.EIA_API_KEY || readDotEnv("EIA_API_KEY");
 
 // Priority series for the analysis (most impactful metrics)
 const PRIORITY_SERIES = {

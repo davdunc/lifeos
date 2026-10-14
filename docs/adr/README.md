@@ -13,7 +13,8 @@ The format matches `tradekit/docs/adr/`.
 |---|---|---|
 | [0001](0001-record-architecture-decisions.md) | Record architecture decisions | accepted |
 | [0002](0002-secrets-stay-in-dotenv.md) | Secrets stay in `~/.claude/.env` for now; no vault | accepted |
-| [0003](0003-tools-load-keys-from-dotenv.md) | Tools load their keys from `.env` themselves | accepted |
+| [0003](0003-tools-load-keys-from-dotenv.md) | Tools load their keys from `.env` themselves | superseded by 0007 |
 | [0004](0004-adopt-lifeos-containment.md) | Adopt upstream LifeOS containment, adapted to this layout | accepted |
 | [0005](0005-versioned-releases-and-node-stamps.md) | Every change ships as a versioned release, and nodes stamp what they run | accepted |
 | [0006](0006-fork-only-for-setup-changes.md) | Setup changes stay in this repo; upstream gets only real bug fixes | accepted |
+| [0007](0007-usmetrics-keys-follow-upstream-secrets-rule.md) | USMetrics reads keys the way upstream's secrets rule says, with no local improvements | accepted |

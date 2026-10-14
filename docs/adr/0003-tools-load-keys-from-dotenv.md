@@ -1,6 +1,6 @@
 # ADR 0003 — Tools load their keys from `.env` themselves
 
-**Status:** accepted · **Date:** 2026-10-14
+**Status:** superseded by 0007 · **Date:** 2026-10-14
 
 ## Context
 

@@ -18,18 +18,33 @@
  *   - ${PROJECTS_DIR}/Substrate/Data/US-Common-Metrics/us-metrics-historical.csv (appended)
  */
 
-import "./loadEnv";
 import { parseArgs } from "util";
+import { homedir } from "os";
 import { readFileSync, writeFileSync, existsSync, appendFileSync } from "fs";
 import { join } from "path";
+
+// Secrets: process.env first, then ~/.claude/.env read directly (LifeOS Containment.md:
+// per-tool fs.readFileSync + small parser, no shared helper).
+function readDotEnv(key: string): string | undefined {
+  try {
+    const content = readFileSync(join(homedir(), ".claude", ".env"), "utf-8");
+    for (const line of content.split("\n")) {
+      const match = line.match(/^([^#=]+)=(.*)$/);
+      if (match && match[1].trim() === key) return match[2].trim().replace(/^["']|["']$/g, "");
+    }
+  } catch {
+    // No .env: callers report the missing key.
+  }
+  return undefined;
+}
 
 // ============================================================================
 // CONFIGURATION
 // ============================================================================
 
 const SUBSTRATE_PATH = join(process.env.LIFEOS_DIR || join(process.env.HOME || "", ".claude"), "data/Substrate/US-Common-Metrics");
-const FRED_API_KEY = process.env.FRED_API_KEY;
-const EIA_API_KEY = process.env.EIA_API_KEY;
+const FRED_API_KEY = process.env.FRED_API_KEY || readDotEnv("FRED_API_KEY");
+const EIA_API_KEY = process.env.EIA_API_KEY || readDotEnv("EIA_API_KEY");
 
 // All metrics with their configuration
 interface MetricConfig {
