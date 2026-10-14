@@ -20,7 +20,7 @@ Status verdicts per manifest file:
   MISSING   file is in the release but not installed on this node
   REDACTED  the files differ AND the release copy carries redaction placeholders, so it is a
             public copy of a private-valued file and cannot be compared byte-for-byte
-  REPO-ONLY used by the checkout itself (githooks/); nothing to install
+  REPO-ONLY lives in the checkout only (githooks/, docs/); nothing to install
 """
 import argparse
 import datetime as dt
@@ -37,7 +37,7 @@ CLAUDE = Path(os.environ.get("HOME", str(Path.home()))) / ".claude"
 STAMP = CLAUDE / "LifeOS" / "LOCAL_RELEASE.json"
 META_FILES = {"VERSION", "CHANGELOG.md", "MANIFEST.sha256", "README.md", ".gitignore", "CLAUDE.md"}
 REDACTION_MARKERS = (b"<LIVE_ACCOUNT>", b"<SIM_ACCOUNT>", b"<REDACTED")
-REPO_ONLY_PREFIXES = ("githooks/",)                      # used by the checkout, never installed
+REPO_ONLY_PREFIXES = ("githooks/", "docs/")             # live in the checkout, never installed
 INSTALL_ROOTS = {"systemd/user/": Path.home() / ".config" / "systemd" / "user"}  # repo prefix -> node dir
 
 
@@ -93,8 +93,9 @@ def cmd_version(repo: Path) -> int:
 
 def cmd_manifest(repo: Path) -> int:
     lines = []
-    for rel in sorted(git(repo, "ls-files").splitlines()):
-        if rel in META_FILES:
+    # Tracked plus new-but-not-ignored files, so a manifest run before `git add` still covers them.
+    for rel in sorted(set(git(repo, "ls-files", "--cached", "--others", "--exclude-standard").splitlines())):
+        if rel in META_FILES or not (repo / rel).is_file():
             continue
         lines.append(f"{sha256(repo / rel)}  {rel}")
     (repo / "MANIFEST.sha256").write_text("\n".join(lines) + "\n")

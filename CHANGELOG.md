@@ -12,6 +12,20 @@ a commit that changes any file must bump `VERSION`, add an entry here, and carry
 **Tags:** `vX.Y.Z` on the release commit. **Node stamp:** `~/.claude/LifeOS/LOCAL_RELEASE.json`, written by
 `lifeos_release.py install <component>`.
 
+## [1.1.0] — 2026-10-14
+### Added
+- **Architecture Decision Records** in `docs/adr/` (tradekit format), with an index:
+  - 0001: record architecture decisions
+  - 0002: secrets stay in `.env`; no vault yet (options priced)
+  - 0003: tools load keys from `.env` (notes the open divergence from upstream's no-shared-helper rule)
+  - 0004: containment adoption
+  - 0005: versioned releases and node stamps
+  - 0006: setup changes are fork-only
+
+### Changed
+- `lifeos_release.py status`: `docs/` is REPO-ONLY.
+- `lifeos_release.py manifest`: also covers new, not-yet-staged files (outside `.gitignore`). Before this, running `manifest` before `git add` left new files out, and the pre-commit gate rejected the commit.
+
 ## [1.0.1] — 2026-10-14
 ### Fixed
 - `lifeos_release.py status`: a file is REDACTED only when it differs from the node copy **and** carries a placeholder. Files that merely mention `<LIVE_ACCOUNT>` (the policy doc, the checker, this tool) now report MATCH.
