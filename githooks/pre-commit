@@ -1,0 +1,8 @@
+#!/bin/sh
+# 1. Containment gate (LifeOS/CONTAINMENT.md): deny-list identifiers and .env files never reach this public repo.
+# 2. Release gate: every change ships as an identifiable release (VERSION + CHANGELOG + MANIFEST).
+top="$(git rev-parse --show-toplevel)"
+checker="$HOME/.claude/Tools/containment_check.ts"
+[ -f "$checker" ] || { echo "containment gate: $checker missing — run Tools/lifeos_release.py install containment" >&2; exit 1; }
+bun "$checker" --staged "$top" || exit 1
+exec python3 "$top/Tools/lifeos_release.py" --repo "$top" precommit

@@ -25,3 +25,4 @@ LifeOS/USER/
 LifeOS/MEMORY/
 .env.*
 !.env.example
+__pycache__/
