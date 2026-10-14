@@ -21,3 +21,7 @@ tasks/
 *.jsonl
 .DS_Store
 Thumbs.db
+LifeOS/USER/
+LifeOS/MEMORY/
+.env.*
+!.env.example
