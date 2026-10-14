@@ -18,8 +18,9 @@ Status verdicts per manifest file:
   MATCH     installed copy is byte-identical to the release
   DIFFERS   installed copy has drifted (edited locally, or the node is on another release)
   MISSING   file is in the release but not installed on this node
-  REDACTED  the release copy carries redaction placeholders (<LIVE_ACCOUNT> …), so it is a
+  REDACTED  the files differ AND the release copy carries redaction placeholders, so it is a
             public copy of a private-valued file and cannot be compared byte-for-byte
+  REPO-ONLY used by the checkout itself (githooks/); nothing to install
 """
 import argparse
 import datetime as dt
@@ -36,6 +37,18 @@ CLAUDE = Path(os.environ.get("HOME", str(Path.home()))) / ".claude"
 STAMP = CLAUDE / "LifeOS" / "LOCAL_RELEASE.json"
 META_FILES = {"VERSION", "CHANGELOG.md", "MANIFEST.sha256", "README.md", ".gitignore", "CLAUDE.md"}
 REDACTION_MARKERS = (b"<LIVE_ACCOUNT>", b"<SIM_ACCOUNT>", b"<REDACTED")
+REPO_ONLY_PREFIXES = ("githooks/",)                      # used by the checkout, never installed
+INSTALL_ROOTS = {"systemd/user/": Path.home() / ".config" / "systemd" / "user"}  # repo prefix -> node dir
+
+
+def installed_path(rel: str) -> Path | None:
+    """Where a release file lives on the node; None for repo-only files."""
+    if rel.startswith(REPO_ONLY_PREFIXES):
+        return None
+    for prefix, root in INSTALL_ROOTS.items():
+        if rel.startswith(prefix):
+            return root / rel[len(prefix):]
+    return CLAUDE / rel
 
 # Components a node can install from the release. Files are ~/.claude-relative.
 COMPONENTS = {
@@ -169,16 +182,20 @@ def cmd_status(repo: Path) -> int:
         print("node stamp   : NONE (no release installed via lifeos_release.py)")
     counts: dict[str, int] = {}
     for digest, rel in read_manifest(repo):
-        dst = CLAUDE / rel
-        if (repo / rel).exists() and any(m in (repo / rel).read_bytes() for m in REDACTION_MARKERS):
-            verdict = "REDACTED"
+        dst = installed_path(rel)
+        if dst is None:
+            verdict = "REPO-ONLY"
         elif not dst.exists():
             verdict = "MISSING"
+        elif sha256(dst) == digest:
+            verdict = "MATCH"
+        elif any(m in (repo / rel).read_bytes() for m in REDACTION_MARKERS):
+            verdict = "REDACTED"
         else:
-            verdict = "MATCH" if sha256(dst) == digest else "DIFFERS"
+            verdict = "DIFFERS"
         counts[verdict] = counts.get(verdict, 0) + 1
-        if verdict != "MATCH":
-            print(f"  {verdict:8} {rel}")
+        if verdict not in ("MATCH", "REPO-ONLY"):
+            print(f"  {verdict:9} {rel}")
     print("summary      : " + ", ".join(f"{k} {v}" for k, v in sorted(counts.items())))
     installed = {f for c in (stamp or {}).get("components", {}) for f in COMPONENTS.get(c, {}).get("files", [])}
     drift = [rel for d, rel in read_manifest(repo)

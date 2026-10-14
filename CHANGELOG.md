@@ -12,6 +12,11 @@ a commit that changes any file must bump `VERSION`, add an entry here, and carry
 **Tags:** `vX.Y.Z` on the release commit. **Node stamp:** `~/.claude/LifeOS/LOCAL_RELEASE.json`, written by
 `lifeos_release.py install <component>`.
 
+## [1.0.1] — 2026-10-14
+### Fixed
+- `lifeos_release.py status`: a file is REDACTED only when it differs from the node copy **and** carries a placeholder. Files that merely mention `<LIVE_ACCOUNT>` (the policy doc, the checker, this tool) now report MATCH.
+- `lifeos_release.py status`: `githooks/` is REPO-ONLY, and `systemd/user/*` is compared against `~/.config/systemd/user/` instead of being reported MISSING under `~/.claude`.
+
 ## [1.0.0] — 2026-10-14
 First versioned release. Everything before this commit is the unversioned history below.
 
