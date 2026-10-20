@@ -12,6 +12,23 @@ a commit that changes any file must bump `VERSION`, add an entry here, and carry
 **Tags:** `vX.Y.Z` on the release commit. **Node stamp:** `~/.claude/LifeOS/LOCAL_RELEASE.json`, written by
 `lifeos_release.py install <component>`.
 
+## [1.2.0] — 2026-10-20
+### Added
+- **SlowDayChecklist workflow** (`skills/Trading/Workflows/SlowDayChecklist.md`): Roberto's
+  five-check prioritization protocol for quiet sessions — Big Picture → Sector ETFs →
+  Catalysts → Elevated premarket volume → Relative strength/weakness — usable premarket and
+  as a mid-session reset. A slow day is not automatically a no-trade day; the checklist
+  re-scopes the existing seven-section game plan (five-check summary under MACRO,
+  candidates under WATCHLIST, C-size/RVOL guidance inside the 3-bullet RULES cap) and never
+  adds sections. C-size risk comes from the approved R-CONFIG definition; RVOL 1.5+ /
+  ≤0.8 caution is Roberto's attributed guidance, not a validated automated gate.
+- **MorningGamePlan: Slow Day Protocol hard rule** — phase hooks in Phase 2 (slow-day
+  discovery route when the gapper/catalyst screen comes up empty), Phase 5 (`WAIT —
+  scanning for relative strength/weakness` is a valid thesis entry), and Phase 6 (ordered
+  five-check summary in the output). Also corrected the stale claim that `tradekit cards *`
+  does not exist: the reporting layer shipped with PR #12 (`tradekit cards gameplan
+  --format dw` renders the stored GAMEPLAN record).
+
 ## [1.1.1] — 2026-10-14
 ### Changed
 - **USMetrics key loading now follows upstream's secrets rule** (ADR 0007, superseding 0003):
