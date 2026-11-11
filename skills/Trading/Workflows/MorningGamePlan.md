@@ -56,8 +56,9 @@ against, so the morning plan and the evening recap line up on one grade ladder a
 axis.
 
 Rule 0 of that schema applies here: **a rule with no live enforcer is ASPIRATIONAL and must
-not be used to score anything.** `tradekit cards *` does not exist as of 2026-08-05 — do not
-call it or promise its output.
+not be used to score anything.** The reporting layer shipped with `tradekit cards`
+(Discipline Workshop plan renderer, PR #12): `tradekit cards gameplan --format dw` renders
+the stored GAMEPLAN record — it renders what was stored, it does not collect or create one.
 
 ## ⛔ HARD RULE: Game Plan Skeleton (local artifact)
 
@@ -188,6 +189,11 @@ a menu invites substitution when the real setup does not fire. See
   seven. If it fits nowhere, it does not belong in the game plan.
 - **No-trade days:** sections 3–5 collapse into a single **POSTURE** section stating the
   stance and the re-entry condition. Sections 1, 2, 6, 7 still render.
+- **Slow days:** run `Workflows/SlowDayChecklist.md` (five checks, in order). A slow day is
+  NOT automatically a no-trade day — the checklist is a prioritization pass and its output
+  can still be a full seven-section plan. Its results land inside the existing sections
+  (five-check summary under MACRO, candidates under WATCHLIST, C-size/RVOL guidance inside
+  the 3-bullet RULES cap); it never adds or renames sections.
 - **A missing input is written as UNAVAILABLE with its reason, never silently dropped.**
   An absent section reads as "nothing to report"; that is how a broken data source becomes
   invisible.
@@ -431,6 +437,33 @@ If the trigger has not fired by Kill Time, **the thesis is dead for the day.** N
 
 **How to apply during synthesis:** Add `Kill: HH:MM CT` to every Thesis Trade block and every Watchlist row's Trigger column. Use defaults above unless the setup has a specific reason to extend (e.g., earnings-reaction trades may need to wait for the first analyst note that drives direction).
 
+## ⛔ HARD RULE: Slow Day Protocol
+
+**When the session is quiet — muted volatility, almost no fresh news, a gap into the middle of
+the prior session's range, the big idea not playing out — run `Workflows/SlowDayChecklist.md`:
+five checks, in order (Big Picture → Sector ETFs → Catalysts → Elevated premarket volume →
+Relative strength/weakness).** The answer is not "there's nothing to do" — it is to prioritize.
+Source: Roberto's slow-day checklist (The Checklist Manifesto).
+
+Phase hooks:
+
+- **Phase 2:** slow-day candidates cannot come solely from the gapper/catalyst screen — that
+  screen excludes exactly the opportunities this protocol exists to find. The discovery route is
+  the five checks: sector ETFs into levels (check 2), catalyst scan (check 3), premarket dollar
+  volume ranking (check 4).
+- **Phase 5:** if no candidate qualifies, `WAIT — scanning for relative strength/weakness` is a
+  valid thesis-trade entry. Do not manufacture a premarket thesis. Premarket RS is a pending
+  observation until the open confirms it.
+- **Phase 6:** the output carries the ordered five-check summary under §2 MACRO, and the C-size /
+  RVOL guidance inside the existing 3-bullet RULES cap.
+
+Mid-session, the same checklist is the reset when the published thesis has gone quiet — restart
+from check 1 (the note's 11:30 AM example is an illustration, not a schedule). A reset never
+resurrects expired triggers (Kill Times stand), never bypasses the R-viability or playbook
+gates, and never authorizes an automatic reversal. C-size risk comes from the approved R-CONFIG
+definition — if absent, write C-size UNDEFINED and derive no risk or share count; RVOL 1.5+
+(≤0.8 caution) is Roberto's stated guidance, not a validated automated gate.
+
 ## Steps
 
 ### Phase 1: Market Context (6:00-6:20 CT)
@@ -511,6 +544,11 @@ If the trigger has not fired by Kill Time, **the thesis is dead for the day.** N
    - Unusual volume movers
    - Earnings/catalyst plays
 
+   **Slow-day route:** when the session is quiet (see HARD RULE: Slow Day Protocol), candidates
+   come from the five checks instead — sector ETFs into levels, the catalyst scan, and the
+   premarket dollar-volume ranking. A gapper/catalyst screen that returns nothing is the
+   trigger for this route, not the end of Phase 2.
+
 2. **For each candidate ticker:**
    - `MarketData.ts quote TICKER` — fundamentals snapshot
    - `MarketData.ts ohlcv TICKER --period daily --range 5d` — calculate Camarilla pivots
@@ -570,6 +608,14 @@ For each ticker on the watchlist:
 ### Phase 5: Identify the Thesis Trade (7:15-7:30 CT)
 
 > "Trade the thesis, not the ticker that's moving the most on your screen."
+
+If no candidate qualifies on a slow day, the entry is **`WAIT — scanning for relative
+strength/weakness`** (see HARD RULE: Slow Day Protocol). Do not manufacture a premarket
+thesis. When WAIT applies: skip primary-trade selection entirely; allow a scan-only plan
+without fabricated fields — Phase 7 still posts, with the THESIS TRADE line stating
+`WAIT — scanning for relative strength/weakness` instead of a ticker and no invented
+entry/stop/target; Phase 8 loads whatever scan candidates the watchlist produced, and is
+skipped only if there are none.
 
 1. **Which ticker has the highest conviction?**
    - Strongest catalyst + cleanest chart + best setup grade
