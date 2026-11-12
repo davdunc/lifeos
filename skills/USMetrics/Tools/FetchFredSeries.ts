@@ -75,7 +75,7 @@ const CORE_SERIES: Record<string, { name: string; category: string; unit: string
   "PI": { name: "Personal Income", category: "Consumer", unit: "Billions of Dollars" },
   "DSPI": { name: "Disposable Personal Income", category: "Consumer", unit: "Billions of Dollars" },
   "PSAVERT": { name: "Personal Saving Rate", category: "Consumer", unit: "Percent" },
-  "TOTALSL": { name: "Consumer Credit Outstanding", category: "Consumer", unit: "Billions of Dollars" },
+  "TOTALSL": { name: "Consumer Credit Outstanding", category: "Consumer", unit: "Millions of Dollars" },
   "DRCCLACBS": { name: "Credit Card Delinquency Rate", category: "Consumer", unit: "Percent" },
   "TDSP": { name: "Debt Service Ratio", category: "Consumer", unit: "Percent" },
 
@@ -95,8 +95,8 @@ const CORE_SERIES: Record<string, { name: string; category: string; unit: string
   // Government & Fiscal
   "GFDEBTN": { name: "Federal Debt Total", category: "Fiscal", unit: "Millions of Dollars" },
   "FYFSD": { name: "Federal Surplus/Deficit", category: "Fiscal", unit: "Millions of Dollars" },
-  "FGEXPND": { name: "Federal Spending", category: "Fiscal", unit: "Millions of Dollars" },
-  "FGRECPT": { name: "Federal Receipts", category: "Fiscal", unit: "Millions of Dollars" },
+  "FGEXPND": { name: "Federal Spending", category: "Fiscal", unit: "Billions of Dollars" },
+  "FGRECPT": { name: "Federal Receipts", category: "Fiscal", unit: "Billions of Dollars" },
 
   // Demographics (Annual)
   "POPTHM": { name: "U.S. Population", category: "Demographics", unit: "Thousands" },
@@ -175,7 +175,7 @@ async function fetchFredSeries(
         date: obs.date,
         value: obs.value === "." ? null : parseFloat(obs.value)
       }))
-      .filter(obs => obs.value !== null);
+      .filter((obs): obs is { date: string; value: number } => obs.value !== null && Number.isFinite(obs.value));
 
     const values = observations.map(o => o.value).filter((v): v is number => v !== null);
 

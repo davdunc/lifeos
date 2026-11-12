@@ -138,6 +138,8 @@ export interface TrendStat {
   delta: number;
   unit: ChangeUnit;
   direction: "↑" | "↓" | "→";
+  /** True when the start value was interpolated across a single unpublished period (e.g. BLS Oct 2025). Rendered with "≈". */
+  interpolated?: boolean;
 }
 
 export async function fetchFredSeries(seriesId: string, years: number = 10): Promise<SeriesResult | null> {
@@ -156,10 +158,16 @@ export async function fetchFredSeries(seriesId: string, years: number = 10): Pro
 
   try {
     const response = await fetch(url);
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.error(`Error fetching ${seriesId}: HTTP ${response.status}`);
+      return null;
+    }
 
     const data = await response.json();
-    if (!data.observations?.length) return null;
+    if (!data.observations?.length) {
+      console.error(`No data found for ${seriesId}`);
+      return null;
+    }
 
     const observations: Observation[] = data.observations
       .filter((o: any) => o.value !== ".")
@@ -229,9 +237,19 @@ export function calculateTrend(observations: Observation[], years: number, isRat
       startObs = observations[i];
     }
   }
-  if (bestGap > startTolerance(observations)) return null;
+  let start = startObs.value;
+  let startDate = startObs.date;
+  let interpolated = false;
+  if (bestGap > startTolerance(observations)) {
+    // Exactly one period unpublished at the target (both neighbours ~one period away):
+    // interpolate by time and flag it. Anything wider stays null rather than guessed.
+    const est = interpolateSingleGap(observations, targetMs);
+    if (!est) return null;
+    start = est;
+    startDate = target.toISOString().slice(0, 10);
+    interpolated = true;
+  }
 
-  const start = startObs.value;
   const end = latest.value;
   const change = end - start;
   const pctChange = start === 0 ? NaN : (change / Math.abs(start)) * 100;
@@ -239,7 +257,24 @@ export function calculateTrend(observations: Observation[], years: number, isRat
   const delta = isRate ? change : pctChange;
   const direction = !Number.isFinite(delta) || Math.abs(delta) < SCALE[unit].flat ? "→" : delta > 0 ? "↑" : "↓";
 
-  return { start, end, startDate: startObs.date, endDate: latest.date, change, pctChange, delta, unit, direction };
+  return { start, end, startDate, endDate: latest.date, change, pctChange, delta, unit, direction, ...(interpolated ? { interpolated } : {}) };
+}
+
+/** Time-interpolated value at `targetMs` when the target falls in a single-period hole; null otherwise. */
+function interpolateSingleGap(observations: Observation[], targetMs: number): number | null {
+  const gaps = observations.slice(1).map((o, i) => dateMs(o) - dateMs(observations[i])).sort((a, b) => a - b);
+  const median = gaps[Math.floor(gaps.length / 2)] ?? 0;
+  if (!median) return null;
+  const afterIdx = observations.findIndex(o => dateMs(o) > targetMs);
+  if (afterIdx <= 0) return null;
+  const before = observations[afterIdx - 1];
+  const after = observations[afterIdx];
+  const span = dateMs(after) - dateMs(before);
+  // One missing period means the bracket spans ~2 periods (1.5–2.5 allows for month-length jitter).
+  // A bracket of ~1 period is the series' normal spacing, not a hole, so it is not interpolated.
+  if (span < median * 1.5 || span > median * 2.5) return null;
+  const w = (targetMs - dateMs(before)) / span;
+  return before.value + (after.value - before.value) * w;
 }
 
 async function fetchEIAGasPrice(): Promise<{ value: number; date: string } | null> {
@@ -281,8 +316,13 @@ export function formatValue(value: number, seriesId: string): string {
   if (["MSPUS"].includes(seriesId)) {
     return `$${(value / 1000).toFixed(0)}K`;
   }
-  if (["PAYEMS", "ICSA"].includes(seriesId)) {
+  if (seriesId === "PAYEMS") {
+    // reported in thousands of persons
     return value >= 1000 ? `${(value / 1000).toFixed(1)}M` : `${value.toFixed(0)}K`;
+  }
+  if (seriesId === "ICSA") {
+    // reported as a plain count of claims (FetchFredSeries: unit "Number")
+    return value >= 1000 ? `${(value / 1000).toFixed(0)}K` : value.toFixed(0);
   }
   return value.toFixed(2);
 }
@@ -294,10 +334,12 @@ export function formatDelta(value: number, unit: ChangeUnit): string {
 }
 
 export function formatChange(t: TrendStat | null): string {
-  return t ? formatDelta(t.delta, t.unit) : "—";
+  if (!t) return "—";
+  const s = formatDelta(t.delta, t.unit);
+  return t.interpolated && s !== "—" ? `≈${s}` : s;
 }
 
-export function generateMarkdown(results: Map<string, SeriesResult>, gasPrice: { value: number; date: string } | null): string {
+export function generateMarkdown(results: Map<string, SeriesResult>, gasPrice: { value: number; date: string } | null, failed: string[] = []): string {
   const now = new Date().toISOString().replace('T', ' ').split('.')[0];
 
   let md = `# US Economic State Analysis
@@ -522,6 +564,22 @@ export function generateMarkdown(results: Map<string, SeriesResult>, gasPrice: {
 2. Include leading economic indicators (LEI)
 3. Add wage growth by sector data
 
+`;
+
+  if (failed.length > 0 || !gasPrice) {
+    md += `
+---
+
+## Metrics Not Fetched
+
+The report proceeds with the data that was available. These could not be fetched and are absent from the tables above:
+
+`;
+    for (const id of failed) md += `- ${SERIES_NAMES[id] || id} (${id})\n`;
+    if (!gasPrice) md += `- Gas price (EIA; needs EIA_API_KEY)\n`;
+  }
+
+  md += `
 ---
 
 ## Sources
@@ -572,9 +630,18 @@ Environment:
     process.exit(0);
   }
 
+  // Without the key every series fetch returns null and the report would be an
+  // empty template; stop and say how to fix it instead (GetCurrentState Ideal State).
+  if (!FRED_API_KEY) {
+    console.error("Error: FRED_API_KEY not set (environment or ~/.claude/.env)");
+    console.error("Get your free API key at: https://fred.stlouisfed.org/docs/api/api_key.html");
+    process.exit(1);
+  }
+
   console.error("Fetching data from FRED API...");
 
   const results = new Map<string, SeriesResult>();
+  const failed: string[] = [];
 
   // Fetch all priority series
   const allSeries = Object.values(PRIORITY_SERIES).flat();
@@ -583,6 +650,8 @@ Environment:
     const result = await fetchFredSeries(id, 10);
     if (result) {
       results.set(id, result);
+    } else {
+      failed.push(id);
     }
     // Small delay to be nice to the API
     await new Promise(r => setTimeout(r, 100));
@@ -591,8 +660,15 @@ Environment:
   console.error("Fetching gas prices from EIA...");
   const gasPrice = await fetchEIAGasPrice();
 
+  // An empty result set would render as a report with no data in it; refuse instead of presenting it as a success.
+  if (results.size === 0) {
+    console.error(`Error: none of the ${allSeries.length} FRED series could be fetched; no report written`);
+    process.exit(1);
+  }
+  if (failed.length > 0) console.error(`Could not fetch ${failed.length} series: ${failed.join(", ")}`);
+
   console.error("Generating analysis...");
-  const markdown = generateMarkdown(results, gasPrice);
+  const markdown = generateMarkdown(results, gasPrice, failed);
 
   if (values.output) {
     await Bun.write(values.output, markdown);

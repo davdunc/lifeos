@@ -12,6 +12,33 @@ a commit that changes any file must bump `VERSION`, add an entry here, and carry
 **Tags:** `vX.Y.Z` on the release commit. **Node stamp:** `~/.claude/LifeOS/LOCAL_RELEASE.json`, written by
 `lifeos_release.py install <component>`.
 
+## [1.3.0] — 2026-11-12
+### Cherry-picked from upstream LifeOS 8.761.0 (`fb9aef4`, USMetrics → USStats)
+- `UpdateSubstrateMetrics.ts`: a display-only `scale` divisor for FRED series reported in a smaller unit
+  than they print. Affects RSAFS, ICSA, CCSA, TOTALSL, BOPGSTB, BOPGEXP, BOPGIMP, GFDEBTN (1e6), and POPTHM.
+  Before: claims printed as "189,000K", debt as "$39462398.000T", and the trade balance as "$-105047.0B".
+  The raw CSV `value` is unchanged.
+- `GenerateAnalysis.ts`:
+  - ICSA formats as a count of claims ("189K", was "189.0M").
+  - HTTP and empty-series errors are logged.
+  - A **Metrics Not Fetched** section lists failed series.
+  - Stops when no FRED key is set, and refuses to write an empty report.
+- `FetchFredSeries.ts`:
+  - Unit metadata fixed: TOTALSL is in millions; FGEXPND and FGRECPT are in billions.
+  - Non-finite values are dropped.
+### Added (fork-only)
+- `GenerateAnalysis.ts`: when exactly one period is missing at a trend's start, the start value is
+  interpolated by time, and the cell renders with **≈**. Example: BLS never published October 2025, so CPI
+  and UNRATE 1Y were blank. Two or more missing periods still give "—".
+- `UpdateSubstrateMetrics.ts`: EXHOSLUSM495S gets `scale: 1e3`. FRED reports it in units; it used to print
+  "3,990,000K". Upstream lacks this.
+- `GenerateAnalysis.test.ts` is added to the repo: 16 tests, including the single-gap interpolation cases.
+- ADR 0008: cherry-pick upstream corrections on every upstream release.
+### Skipped from 8.761.0 (structural; ADR 0008)
+- USMetrics → USStats rename, `UsStatsConfig.ts`, the `LIFEOS/TOOLS/Paths.ts` dependency, `Intents/` layout,
+  the new data directory, config-file key loading (this fork keeps ADR 0007), and the testability
+  dependency injection in `FetchFredSeries`.
+
 ## [1.2.0] — 2026-10-20
 ### Added
 - **SlowDayChecklist workflow** (`skills/Trading/Workflows/SlowDayChecklist.md`): Roberto's

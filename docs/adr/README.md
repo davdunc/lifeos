@@ -18,3 +18,4 @@ The format matches `tradekit/docs/adr/`.
 | [0005](0005-versioned-releases-and-node-stamps.md) | Every change ships as a versioned release, and nodes stamp what they run | accepted |
 | [0006](0006-fork-only-for-setup-changes.md) | Setup changes stay in this repo; upstream gets only real bug fixes | accepted |
 | [0007](0007-usmetrics-keys-follow-upstream-secrets-rule.md) | USMetrics reads keys the way upstream's secrets rule says, with no local improvements | accepted |
+| [0008](0008-cherry-pick-upstream-every-release.md) | Cherry-pick upstream LifeOS corrections on every upstream release | accepted |

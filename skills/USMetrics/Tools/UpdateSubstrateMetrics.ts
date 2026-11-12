@@ -56,6 +56,8 @@ interface MetricConfig {
   decimals?: number;
   special?: "eia-gas" | "eia-oil" | "treasury-debt" | "yoy-calc";
   baseId?: string; // For calculated metrics (YoY change)
+  /** FRED reports the series in a smaller unit than `format` displays; the raw value is divided by this to display it (millions to trillions: 1e6). */
+  scale?: number;
 }
 
 const METRICS: Record<string, MetricConfig> = {
@@ -67,7 +69,7 @@ const METRICS: Record<string, MetricConfig> = {
   "INDPRO": { name: "Industrial Production", category: "Economic Output", fredId: "INDPRO", source: "Fed/FRED", format: "index", decimals: 2 },
   "TCU": { name: "Capacity Utilization", category: "Economic Output", fredId: "TCU", source: "Fed/FRED", format: "percent", decimals: 1 },
   "DGORDER": { name: "Durable Goods Orders", category: "Economic Output", fredId: "DGORDER", source: "Census/FRED", format: "millions", decimals: 0 },
-  "RSAFS": { name: "Retail Sales", category: "Economic Output", fredId: "RSAFS", source: "Census/FRED", format: "billions", decimals: 1 },
+  "RSAFS": { name: "Retail Sales", category: "Economic Output", fredId: "RSAFS", source: "Census/FRED", format: "billions", decimals: 1, scale: 1e3 },
 
   // Inflation & Prices
   "CPIAUCSL": { name: "CPI-U All Items", category: "Inflation", fredId: "CPIAUCSL", source: "BLS/FRED", format: "index", decimals: 3 },
@@ -82,8 +84,8 @@ const METRICS: Record<string, MetricConfig> = {
   "UNRATE": { name: "Unemployment Rate (U-3)", category: "Employment", fredId: "UNRATE", source: "BLS/FRED", format: "percent", decimals: 1 },
   "U6RATE": { name: "Underemployment Rate (U-6)", category: "Employment", fredId: "U6RATE", source: "BLS/FRED", format: "percent", decimals: 1 },
   "PAYEMS": { name: "Nonfarm Payrolls", category: "Employment", fredId: "PAYEMS", source: "BLS/FRED", format: "thousands", decimals: 0 },
-  "ICSA": { name: "Initial Jobless Claims", category: "Employment", fredId: "ICSA", source: "DOL/FRED", format: "thousands", decimals: 0 },
-  "CCSA": { name: "Continuing Claims", category: "Employment", fredId: "CCSA", source: "DOL/FRED", format: "thousands", decimals: 0 },
+  "ICSA": { name: "Initial Jobless Claims", category: "Employment", fredId: "ICSA", source: "DOL/FRED", format: "thousands", decimals: 0, scale: 1e3 },
+  "CCSA": { name: "Continuing Claims", category: "Employment", fredId: "CCSA", source: "DOL/FRED", format: "thousands", decimals: 0, scale: 1e3 },
   "JTSJOL": { name: "Job Openings (JOLTS)", category: "Employment", fredId: "JTSJOL", source: "BLS/FRED", format: "thousands", decimals: 0 },
   "JTSQUR": { name: "Quit Rate", category: "Employment", fredId: "JTSQUR", source: "BLS/FRED", format: "percent", decimals: 1 },
   "JTSHIR": { name: "Hire Rate", category: "Employment", fredId: "JTSHIR", source: "BLS/FRED", format: "percent", decimals: 1 },
@@ -95,7 +97,7 @@ const METRICS: Record<string, MetricConfig> = {
   // Housing
   "MSPUS": { name: "Median Home Sales Price", category: "Housing", fredId: "MSPUS", source: "Census/FRED", format: "currency", decimals: 0 },
   "CSUSHPINSA": { name: "Case-Shiller Index", category: "Housing", fredId: "CSUSHPINSA", source: "S&P/FRED", format: "index", decimals: 2 },
-  "EXHOSLUSM495S": { name: "Existing Home Sales", category: "Housing", fredId: "EXHOSLUSM495S", source: "NAR/FRED", format: "thousands", decimals: 0 },
+  "EXHOSLUSM495S": { name: "Existing Home Sales", category: "Housing", fredId: "EXHOSLUSM495S", source: "NAR/FRED", format: "thousands", decimals: 0, scale: 1e3 },
   "HSN1F": { name: "New Home Sales", category: "Housing", fredId: "HSN1F", source: "Census/FRED", format: "thousands", decimals: 0 },
   "HOUST": { name: "Housing Starts", category: "Housing", fredId: "HOUST", source: "Census/FRED", format: "thousands", decimals: 0 },
   "PERMIT": { name: "Building Permits", category: "Housing", fredId: "PERMIT", source: "Census/FRED", format: "thousands", decimals: 0 },
@@ -107,7 +109,7 @@ const METRICS: Record<string, MetricConfig> = {
   "PI": { name: "Personal Income", category: "Consumer", fredId: "PI", source: "BEA/FRED", format: "billions", decimals: 1 },
   "DSPI": { name: "Disposable Personal Income", category: "Consumer", fredId: "DSPI", source: "BEA/FRED", format: "billions", decimals: 1 },
   "PSAVERT": { name: "Personal Saving Rate", category: "Consumer", fredId: "PSAVERT", source: "BEA/FRED", format: "percent", decimals: 1 },
-  "TOTALSL": { name: "Consumer Credit Outstanding", category: "Consumer", fredId: "TOTALSL", source: "Fed/FRED", format: "billions", decimals: 1 },
+  "TOTALSL": { name: "Consumer Credit Outstanding", category: "Consumer", fredId: "TOTALSL", source: "Fed/FRED", format: "billions", decimals: 1, scale: 1e3 },
   "DRCCLACBS": { name: "Credit Card Delinquency", category: "Consumer", fredId: "DRCCLACBS", source: "Fed/FRED", format: "percent", decimals: 2 },
   "TDSP": { name: "Debt Service Ratio", category: "Consumer", fredId: "TDSP", source: "Fed/FRED", format: "percent", decimals: 2 },
   "TOTALSA": { name: "Auto Sales", category: "Consumer", fredId: "TOTALSA", source: "BEA/FRED", format: "millions", decimals: 2 },
@@ -125,21 +127,21 @@ const METRICS: Record<string, MetricConfig> = {
   "VIXCLS": { name: "VIX", category: "Financial", fredId: "VIXCLS", source: "CBOE/FRED", format: "index", decimals: 2 },
 
   // Trade & International
-  "BOPGSTB": { name: "Trade Balance", category: "Trade", fredId: "BOPGSTB", source: "Census/BEA/FRED", format: "billions", decimals: 1 },
-  "BOPGEXP": { name: "Exports", category: "Trade", fredId: "BOPGEXP", source: "Census/FRED", format: "billions", decimals: 1 },
-  "BOPGIMP": { name: "Imports", category: "Trade", fredId: "BOPGIMP", source: "Census/FRED", format: "billions", decimals: 1 },
+  "BOPGSTB": { name: "Trade Balance", category: "Trade", fredId: "BOPGSTB", source: "Census/BEA/FRED", format: "billions", decimals: 1, scale: 1e3 },
+  "BOPGEXP": { name: "Exports", category: "Trade", fredId: "BOPGEXP", source: "Census/FRED", format: "billions", decimals: 1, scale: 1e3 },
+  "BOPGIMP": { name: "Imports", category: "Trade", fredId: "BOPGIMP", source: "Census/FRED", format: "billions", decimals: 1, scale: 1e3 },
   "DTWEXBGS": { name: "USD Index", category: "Trade", fredId: "DTWEXBGS", source: "Fed/FRED", format: "index", decimals: 2 },
   "DEXUSEU": { name: "USD/EUR", category: "Trade", fredId: "DEXUSEU", source: "Fed/FRED", format: "number", decimals: 4 },
 
   // Government & Fiscal
-  "GFDEBTN": { name: "Federal Debt Total", category: "Fiscal", fredId: "GFDEBTN", source: "Treasury/FRED", format: "trillions", decimals: 3 },
+  "GFDEBTN": { name: "Federal Debt Total", category: "Fiscal", fredId: "GFDEBTN", source: "Treasury/FRED", format: "trillions", decimals: 3, scale: 1e6 },
   "GFDEGDQ188S": { name: "Debt-to-GDP Ratio", category: "Fiscal", fredId: "GFDEGDQ188S", source: "FRED", format: "percent", decimals: 1 },
   "FGRECPT": { name: "Federal Receipts", category: "Fiscal", fredId: "FGRECPT", source: "Treasury/FRED", format: "billions", decimals: 1 },
   "FGEXPND": { name: "Federal Expenditures", category: "Fiscal", fredId: "FGEXPND", source: "Treasury/FRED", format: "billions", decimals: 1 },
   "TREASURY_DEBT": { name: "Total Public Debt", category: "Fiscal", source: "Treasury", format: "trillions", decimals: 3, special: "treasury-debt" },
 
   // Demographics
-  "POPTHM": { name: "US Population", category: "Demographics", fredId: "POPTHM", source: "Census/FRED", format: "millions", decimals: 1 },
+  "POPTHM": { name: "US Population", category: "Demographics", fredId: "POPTHM", source: "Census/FRED", format: "millions", decimals: 1, scale: 1e3 },
   "SIPOVGINIUSA": { name: "GINI Index", category: "Demographics", fredId: "SIPOVGINIUSA", source: "Census/FRED", format: "number", decimals: 3 },
   "MEHOINUSA672N": { name: "Median Household Income", category: "Demographics", fredId: "MEHOINUSA672N", source: "Census/FRED", format: "currency", decimals: 0 },
 };
@@ -224,8 +226,9 @@ async function fetchTreasuryDebt(): Promise<{ value: number; date: string } | nu
   }
 }
 
-function formatValue(value: number, config: MetricConfig): string {
+function formatValue(rawValue: number, config: MetricConfig): string {
   const decimals = config.decimals ?? 2;
+  const value = rawValue / (config.scale ?? 1); // the stored value stays FRED's own unit; only the display is scaled
 
   switch (config.format) {
     case "percent":
